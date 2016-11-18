@@ -37,16 +37,20 @@ void processMetaRoom(const semantic_map::RoomObservation& observation)
         cout<<"cannot access "<<observation.xml_file_name<<". Quitting..."<<endl;
         return ;
     }
-    else if( info.st_mode & S_IFDIR )
+  /*  else if( info.st_mode & S_IF )
         cout<<observation.xml_file_name<<" is a directory"<<endl;
     else
     {
         cout<<observation.xml_file_name<<" is not a directory. Quitting..."<<endl;
         return ;
-    }
+    }*/
+
+    ROS_INFO("Processing Metaroom for deep_net objects");
 
     // Read the observations from XMLs
-    vector<string> observations = semantic_map_load_utilties::getSweepXmls<PointType>(observation.xml_file_name);
+    vector<string> observations;// semantic_map_load_utilties::getSweepXmls<PointType>(observation.xml_file_name);
+
+    observations.push_back(observation.xml_file_name);
 
     deep_object_detection::DetectObjects detect_objects;
 
@@ -173,7 +177,7 @@ int main(int argc, char** argv)
 
     ros::Rate loop(0.1);
 
-    while(n.ok())
+    while(ros::ok())
     {
 
         ros::spinOnce();
