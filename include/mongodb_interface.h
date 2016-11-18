@@ -81,19 +81,11 @@ public:
 
         for (int j=0; j<obs.roomobjects.size();j++)
         {
-         /*   std::stringstream ss;
-            ss<<room_name.toStdString();ss<<"___";
-            ss<<"labelled_object_cloud";ss<<data.objectScanIndices[j];
 
-            mongo::BSONObjBuilder builder;
-            builder.append("name", ss.str());
-            mongo::BSONObj obj = builder.obj();*/
 
             sensor_msgs::PointCloud2 msg_cloud;
             pcl::toROSMsg(obs.roomobjects[j].cloud, msg_cloud);
 
-            // Just a temporary addition for displaying the point cloud with robomongo;
-          //  msg_cloud.header.frame_id = "/map";
 
             soma_msgs::SOMAObject lobj;
 
@@ -135,6 +127,7 @@ public:
             }
 
 
+            lobj.config ="deep_net_object";
 
 
 
