@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+<package>
+  <name>deep_net_object_store</name>
+  <version>0.0.1</version>
+  <description>The deep_net_object_store package</description>
+
+  <maintainer email="hkarao@kth.se">Hakan Karaoguz</maintainer>
+
+
+  <!-- One license tag required, multiple allowed, one license per tag -->
+  <!-- Commonly used license strings: -->
+  <!--   BSD, MIT, Boost Software License, GPLv2, GPLv3, LGPLv2.1, LGPLv3 -->
+  <license>MIT</license>
+
+
+ 
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>libpcl-all-dev</build_depend>
+  <build_depend>tf</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>pcl_ros</build_depend>
+  <build_depend>libqt4-dev</build_depend>
+  <build_depend>qt_build</build_depend>
+  <build_depend>nav_msgs</build_depend>
+  <build_depend>semantic_map</build_depend>
+  <build_depend>metaroom_xml_parser</build_depend>
+  <build_depend>mongodb_store</build_depend>
+  <build_depend>soma_msgs</build_depend>
+  <build_depend>deep_object_detection</build_depend>
+  <build_depend>cv_bridge</build_depend>
+  <build_depend>soma_manager</build_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>libpcl-all-dev</run_depend>
+  <run_depend>tf</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>sensor_msgs</run_depend>
+  <run_depend>pcl_ros</run_depend>
+  <run_depend>nav_msgs</run_depend>
+  <run_depend>metaroom_xml_parser</run_depend>
+  <run_depend>mongodb_store</run_depend>
+  <run_depend>soma_msgs</run_depend>
+  <run_depend>deep_object_detection</run_depend>
+  <run_depend>cv_bridge</run_depend>
+  <run_depend>soma_manager</run_depend>
+  <run_depend>semantic_map</run_depend>
+  <run_depend>libqt4-dev</run_depend>
+  <run_depend>qt_build</run_depend>
+
+ <!-- The export tag contains other, unspecified, tags -->
+  <export>
+    <!-- Other tools can request additional information be placed here -->
+
+  </export>
+  
+</package>
