@@ -159,6 +159,8 @@ std::vector< std::pair<deep_object_detection::Object,Cloud> > refineObjects(cons
 
     std::vector<deep_object_detection::Object> remainingobjects;
 
+    if(image_cols)
+
 
     // This part eliminates the objects without requested labels
     for(int i = 0; i < objects.size(); i++)
@@ -183,7 +185,7 @@ std::vector< std::pair<deep_object_detection::Object,Cloud> > refineObjects(cons
         if(process)
         {
 
-            Cloud objectpc = crop3DObjectFromPointCloud(objects[i],clouds[objects[i].imageID],image_cols);
+            Cloud objectpc = crop3DObjectFromPointCloud(objects[i],clouds[objects[i].imageID],image_cols,robotPosition);
 
             Eigen::Vector4f centroid;
 
@@ -214,7 +216,7 @@ std::vector< std::pair<deep_object_detection::Object,Cloud> > refineObjects(cons
             for(int j = i+1 ; j < remainingobjectcentroids.size(); j++)
             {
 
-                if(pcl::distances::l2(remainingobjectcentroids[i],remainingobjectcentroids[j]) <= 1.5)
+                if(pcl::distances::l2(remainingobjectcentroids[i],remainingobjectcentroids[j]) <= 1.0)
                 {
                     double isize = remainingobjects[i].width*remainingobjects[i].height;
                     double jsize = remainingobjects[j].width*remainingobjects[j].height;
@@ -264,7 +266,7 @@ std::vector< std::pair<deep_object_detection::Object,Cloud> > refineObjects(cons
         ROS_INFO("Distance of object w.r.t robot: %.2f",dist);
 
 
-        if(addindex[i] == true && dist <= 3.5)
+        if(addindex[i] == true && dist <= 4.0)
         {
 
             std::pair<deep_object_detection::Object,Cloud> objectcloudpair;
@@ -276,43 +278,6 @@ std::vector< std::pair<deep_object_detection::Object,Cloud> > refineObjects(cons
 
 
 
-
-
-
-            // Eigen::Vector3f vec3obj = remainingobjectcentroids[i].head<3>();
-
-
-            //   ROS_INFO("Distance of object w.r.t robot: %.2f",pcl::distances::l2(remainingobjectcentroids[i],vec4));
-
-            //   Eigen::Vector2f vec3 = robotPosition.head<2>();
-
-
-
-            //  vec3 = vec3/vec3.squaredNorm()
-
-            //   Eigen::Vector2f vec3obj = remainingobjectcentroids[i].head<2>();
-
-            //    vec3obj -=vec3;
-
-            //    Eigen::Vector2f zeros;
-
-            //    zeros[0] = 1.0;
-            //    zeros[1]=  0.0;
-            //zeros[2] = 0.;
-
-            // vec3.normalize();
-
-            //    vec3obj.normalize();
-
-            //    zeros.normalize();
-
-            //   std::cout<<"Dots"<<" "<<(double)zeros.dot(vec3obj)<<" "<<acos((double)vec3obj.dot(zeros))<<" "<<vec3obj[0]<<" "<<vec3obj[1]<<" "<<std::endl;//vec3obj[2]<<std::endl;
-
-            //    std::cout<<"Dots2"<<" "<<remainingobjects[i].width<<" "<<180*atan2(vec3obj[1],vec3obj[0])/3.14<<std::endl;
-
-
-
-            //  ROS_INFO("angles %.2f",((float)180*acos((double)vec3.dot(vec3obj)/(vec3.squaredNorm()*vec3obj.squaredNorm()))/(M_PI)));
         }
 
     }
@@ -322,7 +287,7 @@ std::vector< std::pair<deep_object_detection::Object,Cloud> > refineObjects(cons
     return result;
 }
 
-Cloud crop3DObjectFromPointCloud(const deep_object_detection::Object& object, Cloud objectcloud, int image_cols)
+Cloud crop3DObjectFromPointCloud(const deep_object_detection::Object& object, Cloud objectcloud, int image_cols,tf::Vector3 robotPosition)
 {
     Cloud objectpc;
 
@@ -332,9 +297,29 @@ Cloud crop3DObjectFromPointCloud(const deep_object_detection::Object& object, Cl
         for(int y = object.y; y < object.y + object.height; y++)
         {
 
-            if(pcl_isfinite(objectcloud.points[y*image_cols + x].x))
+            PointType point = objectcloud.points[y*image_cols + x];
 
-                objectpc.push_back(objectcloud.points[y*image_cols + x]);
+
+            if(pcl_isfinite(point.x))
+            {
+                Eigen::Vector4f pointxy;
+                pointxy[0] = point.x;
+                pointxy[1] = point.y;
+                pointxy[2] = 0.0;
+                pointxy[3] = 0.0;
+
+                Eigen::Vector4f robotxy;
+
+                robotxy[0] = robotPosition[0];
+                robotxy[1] = robotPosition[1];
+                robotxy[2] = 0.0;
+                robotxy[3] = 0.0;
+
+                 double dist = pcl::distances::l2(pointxy,robotxy);
+
+                if(dist <= 4.0)
+                    objectpc.push_back(point);
+            }
 
         }
     }

@@ -42,7 +42,7 @@ Cloud clampPointCloud(const std::string dimension, Cloud cloud, float maxrange);
 
 RoomObservation readRGBImagesfromRoomSweep(const std::string &observationpath, tf::Vector3 &robotPosition);
 
-Cloud crop3DObjectFromPointCloud(const deep_object_detection::Object& object, Cloud objectcloud, int image_cols);
+Cloud crop3DObjectFromPointCloud(const deep_object_detection::Object& object, Cloud objectcloud, int image_cols, tf::Vector3 robotPosition);
 
 std::vector< std::pair<deep_object_detection::Object,Cloud> > refineObjects(const std::vector<deep_object_detection::Object> &objects, const std::vector<Cloud> &clouds,
                                                                             int image_cols, const std::vector<std::string> labels, tf::Vector3 robotPosition);

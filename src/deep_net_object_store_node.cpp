@@ -37,55 +37,43 @@ void processMetaRoom(const semantic_map::RoomObservation& observation)
         cout<<"cannot access "<<observation.xml_file_name<<". Quitting..."<<endl;
         return ;
     }
-  /*  else if( info.st_mode & S_IF )
-        cout<<observation.xml_file_name<<" is a directory"<<endl;
-    else
-    {
-        cout<<observation.xml_file_name<<" is not a directory. Quitting..."<<endl;
-        return ;
-    }*/
 
     ROS_INFO("Processing Metaroom for deep_net objects");
 
-    // Read the observations from XMLs
-    vector<string> observations;// semantic_map_load_utilties::getSweepXmls<PointType>(observation.xml_file_name);
-
-    observations.push_back(observation.xml_file_name);
-
     deep_object_detection::DetectObjects detect_objects;
 
-    //We now have the observation vector. Now we should parse the relevant data
-    for(int i = 0; i < observations.size(); i++)
+
+    RoomObservation roomobservation = readRGBImagesfromRoomSweep(observation.xml_file_name,sweepCenter);
+
+    if(roomobservation.rosimagesclouds.size() > 0)
     {
 
-        RoomObservation roomobservation = readRGBImagesfromRoomSweep(observations[i],sweepCenter);
+        /************Transform images into ros images***********************/
+        std::vector<sensor_msgs::Image > rosimages;
 
-        if(roomobservation.rosimagesclouds.size() > 0)
+        std::vector<Cloud> clouds;
+
+        for(int i = 0; i < roomobservation.rosimagesclouds.size(); i++)
         {
 
-            /************Transform images into ros images***********************/
-            std::vector<sensor_msgs::Image > rosimages;
+            rosimages.push_back(roomobservation.rosimagesclouds[i].first);
+            clouds.push_back(roomobservation.rosimagesclouds[i].second);
 
-            std::vector<Cloud> clouds;
+        }
+        /*******************************************************************/
 
-            for(int i = 0; i < roomobservation.rosimagesclouds.size(); i++)
+
+        detect_objects.request.images = rosimages;
+        detect_objects.request.confidence_threshold = 0.8;
+
+
+
+        // If we can call the service and get a response
+        if(object_detection_service.call(detect_objects))
+        {
+            if(detect_objects.response.objects.size() > 0)
             {
 
-                rosimages.push_back(roomobservation.rosimagesclouds[i].first);
-                clouds.push_back(roomobservation.rosimagesclouds[i].second);
-
-            }
-            /*******************************************************************/
-
-
-            detect_objects.request.images = rosimages;
-            detect_objects.request.confidence_threshold = 0.8;
-
-
-
-            // If we can call the service and get a response
-            if(object_detection_service.call(detect_objects))
-            {
                 // We refine the detected objects based on distance to not to include same object multiple times
                 std::vector< std::pair<deep_object_detection::Object,Cloud> > refinedObjectsCloudsPair = refineObjects(detect_objects.response.objects,clouds,rosimages[0].width,std::vector<std::string>(),sweepCenter);
 
@@ -121,17 +109,17 @@ void processMetaRoom(const semantic_map::RoomObservation& observation)
                 if(roomobservation.roomobjects.size() > 0)
                     m_MongodbInterface->logSOMAObjectsToDBCallService(soma_insert_service,roomobservation.room,roomobservation);
 
-
             }
-
         }
 
-        if(!ros::ok())
-        {
-            ROS_INFO("Breaking loop...");
-            break;
-        }
     }
+
+   /* if(!ros::ok())
+    {
+        ROS_INFO("Breaking loop...");
+        break;
+    }*/
+
 
 }
 
