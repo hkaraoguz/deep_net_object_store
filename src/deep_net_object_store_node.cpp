@@ -163,7 +163,7 @@ int main(int argc, char** argv)
 
 
 
-    ros::Rate loop(0.1);
+    ros::Rate loop(1);
 
     while(ros::ok())
     {
