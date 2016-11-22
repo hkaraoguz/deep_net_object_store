@@ -1,7 +1,7 @@
-#include "mongodb_interface.h"
+#include "deep_net_object_store/mongodb_interface.h"
 #include "metaroom_xml_parser/load_utilities.h"
 #include <semantic_map/RoomObservation.h>
-#include "util.h"
+#include "deep_net_object_store/util.h"
 
 
 #include <nav_msgs/OccupancyGrid.h>
