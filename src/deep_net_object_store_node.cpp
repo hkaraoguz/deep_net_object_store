@@ -45,6 +45,10 @@ void processMetaRoom(const semantic_map::RoomObservation& observation)
 
     RoomObservation roomobservation = readRGBImagesfromRoomSweep(observation.xml_file_name,sweepCenter);
 
+     ROS_INFO("Observation path %s",observation.xml_file_name.data());
+
+    ROS_INFO("Images and clouds size: %lu",roomobservation.rosimagesclouds.size());
+
     if(roomobservation.rosimagesclouds.size() > 0)
     {
 
@@ -71,8 +75,11 @@ void processMetaRoom(const semantic_map::RoomObservation& observation)
         // If we can call the service and get a response
         if(object_detection_service.call(detect_objects))
         {
+            ROS_INFO("Service call successfull!");
+            ROS_INFO("Num objects %lu",detect_objects.response.objects.size());
             if(detect_objects.response.objects.size() > 0)
             {
+
 
                 // We refine the detected objects based on distance to not to include same object multiple times
                 std::vector< std::pair<deep_object_detection::Object,Cloud> > refinedObjectsCloudsPair = refineObjects(detect_objects.response.objects,clouds,rosimages[0].width,std::vector<std::string>(),sweepCenter);
