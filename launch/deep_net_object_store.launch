@@ -1,0 +1,3 @@
+<launch>
+<node name="deep_net_object_store" pkg="deep_net_object_store" type="deep_net_object_store_node" output="screen" respawn="true"/>
+</launch>
