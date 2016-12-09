@@ -216,7 +216,7 @@ std::vector< std::pair<deep_object_detection::Object,Cloud> > refineObjects(cons
             for(int j = i+1 ; j < remainingobjectcentroids.size(); j++)
             {
 
-                if(pcl::distances::l2(remainingobjectcentroids[i],remainingobjectcentroids[j]) <= 1.0)
+                if(pcl::distances::l2(remainingobjectcentroids[i],remainingobjectcentroids[j]) <= 0.75)
                 {
                     double isize = remainingobjects[i].width*remainingobjects[i].height;
                     double jsize = remainingobjects[j].width*remainingobjects[j].height;
@@ -266,7 +266,7 @@ std::vector< std::pair<deep_object_detection::Object,Cloud> > refineObjects(cons
         ROS_INFO("Distance of object w.r.t robot: %.2f",dist);
 
 
-        if(addindex[i] == true && dist <= 4.0)
+        if(addindex[i] == true && dist <= 6.0)
         {
 
             std::pair<deep_object_detection::Object,Cloud> objectcloudpair;
