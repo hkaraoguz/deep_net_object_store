@@ -8,6 +8,7 @@
 #include <ros/subscriber.h>
 #include <soma_msgs/SOMAObject.h>
 #include <deep_object_detection/DetectObjects.h>
+#include <deep_object_detection/DetectedObjects.h>
 #include <cv_bridge/cv_bridge.h>
 #include <Eigen/Dense>
 #include <Eigen/Core>
@@ -29,9 +30,9 @@ ros::ServiceClient soma_insert_service;
 
 std::string metaroomxmlpath="";
 
-void quasimodoDoneCallback(const std_msgs::String::ConstPtr& msg)
+void deepobjectdetectionDoneCallback(const deep_object_detection::DetectedObjects& msg)
 {
-    metaroomxmlpath = msg->data;
+    metaroomxmlpath = msg.observation_path.data();
 
     if(metaroomxmlpath != "")
     {
@@ -65,57 +66,48 @@ void quasimodoDoneCallback(const std_msgs::String::ConstPtr& msg)
             /*******************************************************************/
 
 
-            detect_objects.request.images = rosimages;
-            detect_objects.request.confidence_threshold = 0.8;
-
-
-
-            // If we can call the service and get a response
-            if(object_detection_service.call(detect_objects))
+            ROS_INFO("Num objects %lu",msg.objects.size());
+            if(msg.objects.size() > 0)
             {
-                ROS_INFO("Service call successfull!");
-                ROS_INFO("Num objects %lu",detect_objects.response.objects.size());
-                if(detect_objects.response.objects.size() > 0)
+
+
+                // We refine the detected objects based on distance to not to include same object multiple times
+                std::vector< std::pair<deep_object_detection::Object,Cloud> > refinedObjectsCloudsPair = refineObjects(msg.objects,clouds,rosimages[0].width,std::vector<std::string>(),sweepCenter);
+
+                for(int j = 0; j < refinedObjectsCloudsPair.size(); j++)
                 {
 
+                    std::pair<deep_object_detection::Object,Cloud> apair = refinedObjectsCloudsPair[j];
 
-                    // We refine the detected objects based on distance to not to include same object multiple times
-                    std::vector< std::pair<deep_object_detection::Object,Cloud> > refinedObjectsCloudsPair = refineObjects(detect_objects.response.objects,clouds,rosimages[0].width,std::vector<std::string>(),sweepCenter);
+                    RoomObject aroomobject;
 
-                    for(int j = 0; j < refinedObjectsCloudsPair.size(); j++)
-                    {
+                    aroomobject.object = apair.first;
+                    aroomobject.cloud = apair.second;
 
-                        std::pair<deep_object_detection::Object,Cloud> apair = refinedObjectsCloudsPair[j];
+                    // aroomobject.image = roomobservation.rosimagesclouds[apair.first.imageID];
 
-                        RoomObject aroomobject;
-
-                        aroomobject.object = apair.first;
-                        aroomobject.cloud = apair.second;
-
-                        // aroomobject.image = roomobservation.rosimagesclouds[apair.first.imageID];
-
-                        cv_bridge::CvImagePtr ptr = cv_bridge::toCvCopy(roomobservation.rosimagesclouds[apair.first.imageID].first,"bgr8");
+                    cv_bridge::CvImagePtr ptr = cv_bridge::toCvCopy(roomobservation.rosimagesclouds[apair.first.imageID].first,"bgr8");
 
 
-                        cv::rectangle(ptr->image,cv::Point(refinedObjectsCloudsPair[j].first.x,refinedObjectsCloudsPair[j].first.y),
-                                      cv::Point(refinedObjectsCloudsPair[j].first.x+refinedObjectsCloudsPair[j].first.width, refinedObjectsCloudsPair[j].first.y + refinedObjectsCloudsPair[j].first.height),cv::Scalar(255,255,0));
+                    cv::rectangle(ptr->image,cv::Point(refinedObjectsCloudsPair[j].first.x,refinedObjectsCloudsPair[j].first.y),
+                                  cv::Point(refinedObjectsCloudsPair[j].first.x+refinedObjectsCloudsPair[j].first.width, refinedObjectsCloudsPair[j].first.y + refinedObjectsCloudsPair[j].first.height),cv::Scalar(255,255,0));
 
 
-                        cv::putText(ptr->image,refinedObjectsCloudsPair[j].first.label.data(),cv::Point(refinedObjectsCloudsPair[j].first.x+refinedObjectsCloudsPair[j].first.width*0.25,refinedObjectsCloudsPair[j].first.y+refinedObjectsCloudsPair[j].first.height*0.5),0,2.0,cv::Scalar(255,255,0));
+                    cv::putText(ptr->image,refinedObjectsCloudsPair[j].first.label.data(),cv::Point(refinedObjectsCloudsPair[j].first.x+refinedObjectsCloudsPair[j].first.width*0.25,refinedObjectsCloudsPair[j].first.y+refinedObjectsCloudsPair[j].first.height*0.5),0,2.0,cv::Scalar(255,255,0));
 
 
-                        ptr->toImageMsg(aroomobject.rosimage);
+                    ptr->toImageMsg(aroomobject.rosimage);
 
-                        roomobservation.roomobjects.push_back(aroomobject);
+                    roomobservation.roomobjects.push_back(aroomobject);
 
 
-
-                    }
-                    if(roomobservation.roomobjects.size() > 0)
-                        m_MongodbInterface->logSOMAObjectsToDBCallService(soma_insert_service,roomobservation.room,roomobservation);
 
                 }
+                if(roomobservation.roomobjects.size() > 0)
+                    m_MongodbInterface->logSOMAObjectsToDBCallService(soma_insert_service,roomobservation.room,roomobservation);
+
             }
+
 
         }
     }
@@ -169,13 +161,13 @@ int main(int argc, char** argv)
 
     m_MongodbInterface = new MongodbInterface(n);
 
-    // Wait for deep-net ros service, if not available return
+   /* // Wait for deep-net ros service, if not available return
     if(!ros::service::waitForService("/deep_object_detection/detect_objects",30))
     {
         ROS_ERROR("Deep Object Detection service not available. Quitting...");
         return -3;
 
-    }
+    }*/
 
     // Wait for deep-net ros service, if not available return
     if(!ros::service::waitForService("/soma/insert_objects",30))
@@ -191,11 +183,11 @@ int main(int argc, char** argv)
     ros::Subscriber sub = n.subscribe("/local_metric_map/room_observations", 1, getMetaRoomPath);
 
 
-    object_detection_service = n.serviceClient<deep_object_detection::DetectObjects>("/deep_object_detection/detect_objects");
+    //object_detection_service = n.serviceClient<deep_object_detection::DetectObjects>("/deep_object_detection/detect_objects");
 
     soma_insert_service = n.serviceClient<soma_manager::SOMAInsertObjs>("soma/insert_objects");
 
-    ros::Subscriber sub2 = n.subscribe("/vocabulary_done", 1, quasimodoDoneCallback);
+    ros::Subscriber sub2 = n.subscribe("/deep_object_detection/detected_objects", 5, deepobjectdetectionDoneCallback);
 
 
 
