@@ -32,7 +32,15 @@ std::string metaroomxmlpath="";
 
 void deepobjectdetectionDoneCallback(const deep_object_detection::DetectedObjects& msg)
 {
-    metaroomxmlpath = msg.observation_path.data();
+   // metaroomxmlpath = msg.observation_path.data();
+    struct stat info;
+    if( stat( metaroomxmlpath.data(), &info ) != 0 )
+    {
+
+        cout<<"cannot access "<<metaroomxmlpath<<endl;
+        metaroomxmlpath = "";
+        return ;
+    }
 
     if(metaroomxmlpath != "")
     {
@@ -126,9 +134,10 @@ void getMetaRoomPath(const semantic_map::RoomObservation& observation)
 {
 
     struct stat info;
+    metaroomxmlpath = "";
 
     if( stat( observation.xml_file_name.data(), &info ) != 0 ){
-        cout<<"cannot access "<<observation.xml_file_name<<". Quitting..."<<endl;
+        cout<<"cannot access "<<observation.xml_file_name<<"..."<<endl;
         return ;
     }
 
